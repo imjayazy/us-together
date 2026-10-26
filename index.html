@@ -37,7 +37,7 @@ $("authform").onsubmit=async e=>{
   try{
     let email=$("email").value.trim(),password=$("password").value;
     if(signup){
-      let r=await db.auth.signUp({email,password,options:{data:{display_name:$("displayname").value.trim()||email.split("@")[0]}}});
+      let r=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname,data:{display_name:$("displayname").value.trim()||email.split("@")[0]}}});
       if(r.error)throw r.error;
       if(!r.data.session)msg("Account created! Check your email to confirm it, then sign in.");
       /* if a session exists, onAuthStateChange will call boot() – FIX 3: no second manual boot() */

@@ -60,3 +60,22 @@ create policy assign_delete on public.assigned_workouts for delete to authentica
 grant select,insert,update,delete on public.goals to authenticated;
 grant select,insert,delete on public.body_logs to authenticated;
 grant select,insert,update,delete on public.assigned_workouts to authenticated;
+
+-- ===== Update 2: height, muscle mass, targets, plans =====
+alter table public.body_logs add column if not exists height_cm numeric;
+alter table public.body_logs add column if not exists muscle_mass_kg numeric;
+alter table public.assigned_workouts add column if not exists source text;
+create table if not exists public.body_targets (
+ user_id uuid primary key references auth.users(id) on delete cascade,
+ target_muscle_kg numeric, target_fat_pct numeric, target_date date,
+ updated_at timestamptz not null default now()
+);
+alter table public.body_targets enable row level security;
+drop policy if exists targets_select on public.body_targets;
+create policy targets_select on public.body_targets for select to authenticated
+using(user_id=auth.uid() or (public.current_couple_id() is not null and user_id in(select id from public.profiles where couple_id=public.current_couple_id())));
+drop policy if exists targets_insert on public.body_targets;
+create policy targets_insert on public.body_targets for insert to authenticated with check(user_id=auth.uid());
+drop policy if exists targets_update on public.body_targets;
+create policy targets_update on public.body_targets for update to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
+grant select,insert,update on public.body_targets to authenticated;
